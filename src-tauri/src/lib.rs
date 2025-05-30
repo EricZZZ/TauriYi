@@ -1,6 +1,6 @@
 use std::fs;
 
-use config::Config;
+use config::AppConfig;
 use resp::R;
 use tauri::path::BaseDirectory;
 use tauri::window::{Color, Effect, EffectState, EffectsBuilder};
@@ -11,6 +11,7 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use utils::calculate_window_position;
 
 mod ai;
+
 mod config;
 mod resp;
 mod utils;
@@ -35,7 +36,7 @@ async fn close_window(webview_window: tauri::WebviewWindow) {
 
 /// 加载配置
 #[tauri::command]
-fn load_config() -> Result<R<Config>, R<String>> {
+fn load_config() -> Result<R<AppConfig>, R<String>> {
     // 获取配置
     let confg = config::get_config();
     println!("配置文件: {:?}", confg);
@@ -47,10 +48,10 @@ fn load_config() -> Result<R<Config>, R<String>> {
 
 /// 保存配置
 #[tauri::command]
-fn update_config(app_handle: tauri::AppHandle, new_config: Config) -> Result<R<()>, R<String>> {
+fn update_config(app_handle: tauri::AppHandle, new_config: AppConfig) -> Result<R<()>, R<String>> {
     let config_path = app_handle
         .path()
-        .resolve("config.json", BaseDirectory::Resource)
+        .resolve(config::CONFIG_PATH, BaseDirectory::Resource)
         .expect("Failed to resolve resource path");
     let config_str = serde_json::to_string_pretty(&new_config).expect("Failed to serialize config");
 
@@ -86,7 +87,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
             // 读取配置文件
-            config::load_config(app);
+            config::init_config(app);
 
             // 应用启动后的设置，可以在这里注册快捷键
             #[cfg(desktop)]
