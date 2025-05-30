@@ -1,9 +1,9 @@
-use std::{path::PathBuf, sync::Mutex};
+use std::sync::Mutex;
 
 use anyhow::Error;
 use once_cell::sync::{Lazy, OnceCell};
 use serde::{Deserialize, Serialize};
-use tauri::{path::BaseDirectory, App, AppHandle, Manager};
+use tauri::{path::BaseDirectory, App, Manager};
 
 pub const INIT_WEIDTH: f64 = 300.0;
 pub const INIT_HEIGHT: f64 = 350.0;
