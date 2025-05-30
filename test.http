@@ -1,0 +1,25 @@
+### post请求
+POST http://localhost:11434/api/generate
+content-type: application/json
+
+{
+  "model":"qwen3:0.6b",
+  "prompt": "你好? /no_think",
+  "stream": false
+}
+
+### chat请求
+
+POST http://localhost:11434/api/chat
+content-type: application/json
+
+{
+  "model":"qwen3:0.6b",
+  "messages": [
+    {
+      "role": "user",
+      "content": "为什么天是蓝色? /no_think"
+    }
+  ],
+  "stream": false
+}
