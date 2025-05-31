@@ -48,7 +48,8 @@ async function translateText() {
         
         const result = await invoke('translate', {
             text: text,
-            targetLang: languages[target]
+            targetLang: target,
+            sourceLang: source
         });
         
         if (result.code === 0 && result.data) {

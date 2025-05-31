@@ -14,6 +14,7 @@ pub enum PlatformType {
     OLLama,
     DeepSeek,
     ChatGPT,
+    MTranServer,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

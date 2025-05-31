@@ -4,7 +4,7 @@ use config::AppConfig;
 use resp::R;
 use tauri::path::BaseDirectory;
 use tauri::window::{Color, Effect, EffectState, EffectsBuilder};
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, LogicalSize, Manager, Size};
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
@@ -13,14 +13,19 @@ use utils::calculate_window_position;
 mod ai;
 
 mod config;
+mod lang;
 mod resp;
 mod utils;
 
 /// 翻译
 #[tauri::command]
-async fn translate(text: &str, target_lang: &str) -> Result<R<String>, R<String>> {
+async fn translate(
+    text: &str,
+    target_lang: lang::Lang,
+    source_lang: lang::Lang,
+) -> Result<R<String>, R<String>> {
     println!("开始调用tauri::command translate: {:?}", text);
-    match ai::translate(text.to_string(), target_lang).await {
+    match ai::translate(text.to_string(), target_lang, source_lang).await {
         Ok(data) => Ok(R::success(data)),
         Err(e) => Err(R::fail(1, &e.to_string())),
     }
@@ -165,6 +170,14 @@ pub fn run() {
             window.set_decorations(false)?;
             window.set_maximizable(false)?;
             window.set_minimizable(false)?;
+            window.set_max_size(Some(Size::Logical(LogicalSize::new(
+                config::INIT_WEIDTH,
+                config::INIT_HEIGHT,
+            ))))?;
+            window.set_min_size(Some(Size::Logical(LogicalSize::new(
+                config::INIT_WEIDTH,
+                config::INIT_HEIGHT,
+            ))))?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
