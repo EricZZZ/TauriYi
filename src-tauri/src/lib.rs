@@ -2,7 +2,10 @@ use std::fs;
 
 use config::AppConfig;
 use resp::R;
+use tauri::menu::{Menu, MenuItem};
 use tauri::path::BaseDirectory;
+use tauri::tray::TrayIconBuilder;
+
 use tauri::window::{Color, Effect, EffectState, EffectsBuilder};
 use tauri::{Emitter, LogicalSize, Manager, Size};
 use tauri::{WebviewUrl, WebviewWindowBuilder};
@@ -11,11 +14,13 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use utils::calculate_window_position;
 
 mod ai;
-
 mod config;
 mod lang;
 mod resp;
 mod utils;
+
+#[cfg(target_os = "macos")]
+use tauri::ActivationPolicy;
 
 /// 翻译
 #[tauri::command]
@@ -178,6 +183,37 @@ pub fn run() {
                 config::INIT_WEIDTH,
                 config::INIT_HEIGHT,
             ))))?;
+
+            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let show_i = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+            let _tray = TrayIconBuilder::new()
+                .menu(&menu)
+                .show_menu_on_left_click(true)
+                .icon(app.default_window_icon().unwrap().clone())
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "quit" => {
+                        println!("quit menu item was clicked");
+                        app.exit(0);
+                    }
+                    "show" => {
+                        println!("show menu item was clicked");
+                        let main_window = app.get_webview_window("main");
+                        if let Some(window) = main_window {
+                            window.show().unwrap();
+                            window.set_focus().unwrap();
+                        } else {
+                            println!("main window not found");
+                        }
+                    }
+                    _ => {
+                        println!("menu item with id: {} was clicked", event.id.as_ref())
+                    }
+                })
+                .build(app)?;
+
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(ActivationPolicy::Accessory);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
