@@ -2,5 +2,6 @@
   "apiKey": "key",
   "apiUrl": "http://localhost:11434/api/chat",
   "modelName": "qwen3:1.7b",
-  "platform": "OLLama"
+  "platform": "OLLama",
+  "theme": "Dark"
 }

@@ -10,6 +10,12 @@ pub const INIT_HEIGHT: f64 = 350.0;
 pub const CONFIG_PATH: &str = "config.json";
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum ThemeType {
+    Dark,
+    Light,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum PlatformType {
     OLLama,
     DeepSeek,
@@ -26,6 +32,7 @@ pub struct AppConfig {
     pub platform: PlatformType,
     #[serde(rename = "modelName")]
     pub model_name: String,
+    pub theme: ThemeType,
 }
 
 impl Default for AppConfig {
@@ -35,6 +42,7 @@ impl Default for AppConfig {
             api_url: "http://localhost:11434/api/chat".to_string(),
             platform: PlatformType::OLLama,
             model_name: "qwen3:1.7b".to_string(),
+            theme: ThemeType::Dark,
         }
     }
 }
@@ -84,5 +92,6 @@ pub fn get_config() -> Result<AppConfig, Error> {
         api_url: config_guard.api_url.clone(),
         platform: config_guard.platform,
         model_name: config_guard.model_name.clone(),
+        theme: config_guard.theme.clone(),
     })
 }

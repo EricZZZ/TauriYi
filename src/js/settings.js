@@ -33,6 +33,30 @@ async function loadSettings() {
     document.querySelectorAll('input[name="platform"]').forEach(radio => {
         radio.checked = radio.value === settings.platform;
     });
+
+     // 加载主题设置
+     const theme = settings.theme || 'Dark';
+     document.querySelectorAll('input[name="theme"]').forEach(radio => {
+         radio.checked = radio.value === theme;
+     });
+
+     // 应用主题
+    applyTheme(theme);
+    
+    // 绑定主题切换事件
+    // bindThemeChangeEvents();
+}
+
+// 绑定主题切换事件
+function bindThemeChangeEvents() {
+    document.querySelectorAll('input[name="theme"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                applyTheme(this.value);
+
+            }
+        });
+    });
 }
 
 // 获取存储的设置
@@ -55,8 +79,9 @@ async function saveSettings() {
     const apiUrl = document.getElementById('apiUrl').value.trim();
     const modelName = document.getElementById('modelName').value.trim();
     const selectedPlatform = document.querySelector('input[name="platform"]:checked');
-    
-    if (!apiKey || !apiUrl || !selectedPlatform || !modelName) {
+    const selectedTheme = document.querySelector('input[name="theme"]:checked');
+
+    if (!apiKey || !apiUrl || !selectedPlatform || !modelName || !selectedTheme) {
         alert('请填写所有必填项');
         return;
     }
@@ -65,19 +90,44 @@ async function saveSettings() {
         apiKey,
         apiUrl,
         platform: selectedPlatform.value,
-        modelName
+        modelName,
+        theme: selectedTheme.value
     };
     
     try {
         const result = await invoke('update_config', { newConfig: settings });
         if (result.code === 0) {
             console.log('保存配置成功');
+            // 应用新主题
+            applyTheme(selectedTheme.value);
+            // 保存成功后关闭设置页面
+            const settingsPage = document.getElementById('settingsPage');
+            const translationPage = document.getElementById('translationPage');
+            const settingsIcon = document.querySelector('.settings-icon');
+            
+            settingsPage.style.display = 'none';
+            translationPage.style.display = 'flex';
+            settingsIcon.classList.remove('active');
+            isSettingsVisible = false;
         } else {
             console.error('保存配置失败:', result.msg);
+            alert('保存设置失败: ' + result.msg);
         }
     } catch (error) {
         console.error('保存设置失败:', error);
         alert('保存设置失败');
+    }
+}
+
+// 应用主题
+function applyTheme(theme) {
+    const body = document.body;
+    if (theme === 'Light') {
+        body.classList.add('light-theme');
+        console.log('应用明亮主题');
+    } else {
+        body.classList.remove('light-theme');
+        console.log('应用暗黑主题');
     }
 }
 
@@ -90,6 +140,12 @@ function resetSettings() {
         document.querySelectorAll('input[name="platform"]').forEach(radio => {
             radio.checked = false;
         });
+        document.querySelectorAll('input[name="theme"]').forEach(radio => {
+            radio.checked = radio.value === 'Dark'; // 默认暗黑主题
+        });
+
+        // 应用默认主题
+        applyTheme('Dark');
         
         try {
             localStorage.removeItem('translationSettings');
@@ -120,4 +176,4 @@ function togglePasswordVisibility() {
     }
 }
 
-export { toggleSettingsPage, saveSettings, resetSettings, togglePasswordVisibility };
+export { resetSettings, saveSettings, togglePasswordVisibility, toggleSettingsPage };

@@ -547,3 +547,136 @@ textarea::-webkit-scrollbar-thumb:hover {
 .toggle-password:hover {
     color: #fff;
 }
+
+/* 明亮主题 */
+body.light-theme {
+    background: #ffffff;
+    color: #333333;
+}
+
+body.light-theme .header {
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+body.light-theme .header h1 {
+    color: #333333;
+}
+
+body.light-theme .settings-icon,
+body.light-theme .close-icon {
+    background: #f0f0f0;
+    color: #666666;
+}
+
+body.light-theme .settings-icon:hover,
+body.light-theme .close-icon:hover {
+    background: #e0e0e0;
+    color: #333333;
+}
+
+body.light-theme .settings-icon.active {
+    background: #007acc;
+    color: #ffffff;
+}
+
+body.light-theme .settings-icon.active:hover {
+    background: #005999;
+}
+
+body.light-theme .input-section,
+body.light-theme .output-section {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+body.light-theme .language-selector select {
+    background: #ffffff;
+    color: #333333;
+    border: 1px solid #ced4da;
+}
+
+body.light-theme .language-selector select:focus {
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.25);
+}
+
+body.light-theme textarea {
+    background: #ffffff;
+    color: #333333;
+    border: none;
+}
+
+body.light-theme textarea::placeholder {
+    color: #6c757d;
+}
+
+body.light-theme .swap-btn {
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+body.light-theme .swap-btn:hover {
+    background: #e9ecef;
+    color: #212529;
+}
+
+body.light-theme .settings-page {
+    background: #ffffff;
+}
+
+body.light-theme .setting-group label {
+    color: #495057;
+}
+
+body.light-theme .setting-group input[type="text"],
+body.light-theme .setting-group input[type="password"] {
+    background: #ffffff;
+    color: #495057;
+    border: 1px solid #ced4da;
+}
+
+body.light-theme .setting-group input[type="text"]:focus,
+body.light-theme .setting-group input[type="password"]:focus {
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.25);
+}
+
+body.light-theme .radio-custom {
+    border: 2px solid #ced4da;
+    background: #ffffff;
+}
+
+body.light-theme .radio-option input[type="radio"]:checked + .radio-custom {
+    background: #007acc;
+    border-color: #007acc;
+}
+
+body.light-theme .save-btn {
+    background: #007acc;
+    color: #ffffff;
+}
+
+body.light-theme .save-btn:hover {
+    background: #005999;
+}
+
+body.light-theme .reset-btn {
+    background: #6c757d;
+    color: #ffffff;
+}
+
+body.light-theme .reset-btn:hover {
+    background: #545b62;
+}
+
+body.light-theme .toggle-password {
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #ced4da;
+}
+
+body.light-theme .toggle-password:hover {
+    background: #e9ecef;
+}

@@ -12,6 +12,9 @@ window.translatedText = document.getElementById('translatedText');
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', async () => {
+    // 加载并应用主题
+    await loadAndApplyTheme();
+    
     // 初始化占位符
     updateSourcePlaceholder();
     updateTargetPlaceholder();
@@ -77,3 +80,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 初始化Tauri功能
     await initializeTauri();
 });
+
+// 加载并应用主题
+async function loadAndApplyTheme() {
+    try {
+        const result = await invoke('load_config');
+        if (result.code === 0 && result.data && result.data.theme) {
+            const theme = result.data.theme;
+            const body = document.body;
+            if (theme === 'Light') {
+                body.classList.add('light-theme');
+            } else {
+                body.classList.remove('light-theme');
+            }
+        }
+    } catch (error) {
+        console.error('加载主题失败:', error);
+        // 默认使用暗黑主题
+    }
+}
