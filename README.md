@@ -1,4 +1,4 @@
-# Tauri Translate
+# Tauri Yi
 一个基于 Tauri 框架开发的桌面翻译应用，支持多种 AI 翻译平台和快捷键操作。
 
 ## 🌟 功能特性
@@ -21,26 +21,25 @@
 - 配置持久化 : 设置自动保存到本地配置文件
 ## 🚀 快速开始
 ### 环境要求
-- Node.js 16+
 - Rust 1.70+
 - Tauri CLI
 ### 安装依赖
-```
-# 安装前端依赖
-npm install
+```shell
+# 安装 Rust
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
 
 # 安装 Tauri CLI
-npm install -g @tauri-apps/cli
+cargo install tauri-cli --version "^2.0.0" --locked
 ```
 ### 开发模式
-```
+```shell
 # 启动开发服务器
-npm run tauri dev
+cargo tauri dev
 ```
 ### 构建应用
-```
+```shell
 # 构建生产版本
-npm run tauri build
+cargo tauri build
 ```
 ## ⚙️ 配置说明
 应用支持多种翻译服务，需要在设置中配置相应的 API 信息：

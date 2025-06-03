@@ -3,5 +3,5 @@
 
 #[tokio::main]
 async fn main() {
-    tauri_translate_lib::run()
+    tauri_yi_lib::run()
 }

@@ -4385,26 +4385,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-translate"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "cli-clipboard",
- "cocoa",
- "enigo",
- "once_cell",
- "reqwest",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-clipboard-manager",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-opener",
- "tokio",
-]
-
-[[package]]
 name = "tauri-utils"
 version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4451,6 +4431,26 @@ dependencies = [
  "embed-resource",
  "indexmap 2.9.0",
  "toml",
+]
+
+[[package]]
+name = "tauri_yi"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cli-clipboard",
+ "cocoa",
+ "enigo",
+ "once_cell",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-clipboard-manager",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-opener",
+ "tokio",
 ]
 
 [[package]]
