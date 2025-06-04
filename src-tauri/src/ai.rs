@@ -37,24 +37,32 @@ pub async fn translate(
     target_lang: Lang,
     source_lang: Lang,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let (api_url, api_key, model_name, platform) = {
+    let (api_url, api_key, model_name, platform,mut system_prompt,mut prompt) = {
         let config = config::CONFIG.get().unwrap().lock().unwrap();
         (
             config.api_url.clone(),
             config.api_key.clone(),
             config.model_name.clone(),
             config.platform,
+            config.system_prompt.clone(),
+            config.prompt.clone(),
         )
     };
-    let mut prompt = "Treat next line as plain text input and translate it into {{to}} output translation ONLY. If translation is unnecessary (e.g. proper nouns, codes, etc.), return the original text. NO explanations. NO notes. Input:
- {{text}}".replace("{{text}}", &text).replace("{{to}}", target_lang.to_full_name());
-
+    system_prompt = system_prompt.replace("{{to}}", source_lang.to_full_name());
+    prompt = prompt.replace("{{text}}", &text).replace("{{to}}", target_lang.to_full_name());
+    if model_name.contains("qwen3") {
+        prompt.push_str(" /no_think");
+    }
     let request_payload: RequestPayload = match platform {
-        PlatformType::OLLama => {
-            prompt.push_str(" /no_think");
+        PlatformType::OLLama => { 
             RequestPayload::Chat(ChatRequest {
                 model: model_name.to_string(),
-                messages: vec![ChatMessage {
+                messages: vec![
+                    ChatMessage {
+                        role: "system".to_string(),
+                        content: system_prompt.clone(),
+                    }
+                    ,ChatMessage {
                     role: "user".to_string(),
                     content: prompt.clone(),
                 }],
@@ -68,7 +76,12 @@ pub async fn translate(
         }),
         _ => RequestPayload::Chat(ChatRequest {
             model: model_name.to_string(),
-            messages: vec![ChatMessage {
+            messages: vec![
+                ChatMessage {
+                    role: "system".to_string(),
+                    content: system_prompt.clone(),
+                },
+                ChatMessage {
                 role: "user".to_string(),
                 content: prompt.clone(),
             }],
@@ -89,27 +102,28 @@ pub async fn translate(
         match platform {
             PlatformType::OLLama => {
                 if let Some(message) = response["message"]["content"].as_str() {
-                    Ok(message.to_string())
+                    if model_name.contains("qwen3") {
+                        // 移除 <think></think> 标记
+                        println!("content: {:?}", message);
+                        let message = message.replace("<think>\n\n</think>\n\n", "");
+                        Ok(message.to_string())
+                    } else {
+                        Ok(message.to_string())    
+                    }
+                    
                 } else {
                     Err("Failed to parse response".into())
                 }
-            }
-            PlatformType::DeepSeek => {
-                if let Some(message) = response["choices"][0]["message"]["content"].as_str() {
-                    Ok(message.to_string())
-                } else {
-                    Err("Failed to parse response".into())
-                }
-            }
-            PlatformType::ChatGPT => {
-                if let Some(message) = response["choices"][0]["message"]["content"].as_str() {
-                    Ok(message.to_string())
-                } else {
-                    Err("Failed to parse response".into())
-                }
-            }
+            }  
             PlatformType::MTranServer => {
                 if let Some(message) = response["result"].as_str() {
+                    Ok(message.to_string())
+                } else {
+                    Err("Failed to parse response".into())
+                }
+            }
+            _ => {
+                if let Some(message) = response["choices"][0]["message"]["content"].as_str() {
                     Ok(message.to_string())
                 } else {
                     Err("Failed to parse response".into())

@@ -70,3 +70,34 @@ pub fn update_config(
 
     Ok(R::success(()))
 }
+
+#[tauri::command]
+pub fn reset_config(app_handle: tauri::AppHandle) -> Result<R<()>, R<String>> {
+    let config_path = app_handle
+        .path()
+        .resolve(config::CONFIG_PATH, BaseDirectory::Resource)
+        .expect("Failed to resolve resource path");
+    
+    // 重置配置
+    let config = AppConfig::default();
+    let config_str = serde_json::to_string_pretty(&config).expect("Failed to serialize config");
+    fs::write(config_path, config_str).expect("Failed to write config file");
+    println!("配置文件已重置: {:?}", config);
+
+    // 更新config：：CONFIG
+    {
+        let mut config_guard = config::CONFIG
+            .get()
+            .expect("Config not initialized")
+            .lock()
+            .expect("Mutex poisoned");
+        *config_guard = config;
+    }
+    // 再次读取以验证修改
+    {
+        let config_guard = config::CONFIG.get().unwrap().lock().unwrap();
+        println!("Verified config: {:?}", *config_guard);
+    }
+
+    Ok(R::success(()))
+}

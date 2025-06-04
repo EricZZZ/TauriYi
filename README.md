@@ -65,7 +65,7 @@ cargo tauri build
 5. 语言切换 : 使用交换按钮快速切换源语言和目标语言
 ## 🏗️ 项目结构
 ```
-tauri-translate/
+TauriYi/
 ├── src/                    # 前端代码
 │   ├── index.html         # 主界面
 │   ├── main.js           # 主要逻辑

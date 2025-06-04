@@ -40,7 +40,8 @@ pub fn run() {
             commands::translate,
             commands::close_window,
             commands::load_config,
-            commands::update_config
+            commands::update_config,
+            commands::reset_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

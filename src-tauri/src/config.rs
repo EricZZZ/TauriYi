@@ -33,6 +33,9 @@ pub struct AppConfig {
     #[serde(rename = "modelName")]
     pub model_name: String,
     pub theme: ThemeType,
+    pub prompt: String,
+    #[serde(rename = "systemPrompt")]
+    pub system_prompt: String,
 }
 
 impl Default for AppConfig {
@@ -43,6 +46,8 @@ impl Default for AppConfig {
             platform: PlatformType::OLLama,
             model_name: "qwen3:1.7b".to_string(),
             theme: ThemeType::Dark,
+            prompt: "Translate to {{to}} (output translation only):\n\n{{text}}".to_string(),
+            system_prompt: "You are a professional {{to}} native translator who needs to fluently translate text into {{to}}.\n\n## Translation Rules\n1. Output only the translated content, without explanations or additional content (such as \"Here's the translation:\" or \"Translation as follows:\")\n2. The returned translation must maintain exactly the same number of paragraphs and format as the original text\n3. For content that should not be translated (such as proper nouns, code, etc.), keep the original text.\n".to_string(),
         }
     }
 }
@@ -93,5 +98,7 @@ pub fn get_config() -> Result<AppConfig, Error> {
         platform: config_guard.platform,
         model_name: config_guard.model_name.clone(),
         theme: config_guard.theme.clone(),
+        prompt: config_guard.prompt.clone(),
+        system_prompt: config_guard.system_prompt.clone(),
     })
 }

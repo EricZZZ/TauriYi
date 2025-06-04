@@ -29,7 +29,8 @@ async function loadSettings() {
     document.getElementById('apiKey').value = settings.apiKey || '';
     document.getElementById('apiUrl').value = settings.apiUrl || '';
     document.getElementById('modelName').value = settings.modelName || '';
-    
+    document.getElementById('systemPrompt').value = settings.systemPrompt || '';
+    document.getElementById('prompt').value = settings.prompt || '';
     document.querySelectorAll('input[name="platform"]').forEach(radio => {
         radio.checked = radio.value === settings.platform;
     });
@@ -78,6 +79,8 @@ async function saveSettings() {
     const apiKey = document.getElementById('apiKey').value.trim();
     const apiUrl = document.getElementById('apiUrl').value.trim();
     const modelName = document.getElementById('modelName').value.trim();
+    const systemPrompt = document.getElementById('systemPrompt').value.trim();
+    const prompt = document.getElementById('prompt').value.trim();
     const selectedPlatform = document.querySelector('input[name="platform"]:checked');
     const selectedTheme = document.querySelector('input[name="theme"]:checked');
 
@@ -91,6 +94,8 @@ async function saveSettings() {
         apiUrl,
         platform: selectedPlatform.value,
         modelName,
+        systemPrompt,
+        prompt,
         theme: selectedTheme.value
     };
     
@@ -132,27 +137,20 @@ function applyTheme(theme) {
 }
 
 // 重置设置
-function resetSettings() {
-    if (confirm('确定要重置所有设置吗？')) {
-        document.getElementById('apiKey').value = '';
-        document.getElementById('apiUrl').value = '';
-        document.getElementById('modelName').value = '';
-        document.querySelectorAll('input[name="platform"]').forEach(radio => {
-            radio.checked = false;
-        });
-        document.querySelectorAll('input[name="theme"]').forEach(radio => {
-            radio.checked = radio.value === 'Dark'; // 默认暗黑主题
-        });
-
-        // 应用默认主题
-        applyTheme('Dark');
-        
-        try {
-            localStorage.removeItem('translationSettings');
-            alert('设置已重置');
-        } catch (error) {
-            console.error('重置设置失败:', error);
+async function resetSettings() {
+    try {
+        const result = await invoke('reset_config');
+        if (result.code === 0) {
+            console.log('重置配置成功');
+            // 重置成功后重新加载设置
+            await loadSettings();
+        } else {
+            console.error('重置配置失败:', result.msg);
+            alert('重置设置失败:'+ result.msg);
         }
+    } catch (error) {
+        console.error('重置设置失败:', error);
+        return {};
     }
 }
 
