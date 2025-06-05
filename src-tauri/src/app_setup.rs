@@ -31,6 +31,7 @@ fn handle_shortcut_press(app_handle: &AppHandle) {
     if let Some(window) = main_window {
         let primary_monitor = window.primary_monitor().unwrap().unwrap();
         let scale_factor = primary_monitor.scale_factor();
+        // 计算窗口的最终位置
         let (final_x, final_y) = utils::calculate_window_position(primary_monitor, scale_factor);
 
         window
@@ -41,7 +42,7 @@ fn handle_shortcut_press(app_handle: &AppHandle) {
 
         match app_handle.clipboard().read_text() {
             Ok(content) => {
-                println!("time:{:?}", std::time::SystemTime::now());
+                
                 println!("Clipboard content received:\n{}", content);
                 app_handle
                     .emit("clipboard-content", content)
@@ -82,4 +83,25 @@ pub fn build_main_window(app: &AppHandle) -> Result<(), Box<dyn std::error::Erro
         config::INIT_HEIGHT,
     ))))?;
     Ok(())
+}
+
+// 专门监控main窗口状态
+pub fn monitor_main_window_state(
+    app_handle: AppHandle
+){
+    tokio::spawn(async move{
+        println!("monitor_main_window_state");
+        loop {
+            let main_window = app_handle.get_webview_window("main");
+            if let Some(window) = main_window.as_ref() {
+                // 检查窗口是否被聚焦
+                if !window.is_focused().unwrap() {
+                    // 隐藏窗口
+                    window.hide().unwrap();
+                }
+                
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+        }
+    });
 }

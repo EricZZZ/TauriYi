@@ -31,6 +31,8 @@ pub fn run() {
             app_setup::build_main_window(app.handle())?;
             // 构建托盘菜单
             tray_menu::setup_tray_icon(app.handle())?;
+            // 监控main窗口状态
+            app_setup::monitor_main_window_state(app.handle().clone());
 
             #[cfg(target_os = "macos")]
             app.set_activation_policy(ActivationPolicy::Accessory);

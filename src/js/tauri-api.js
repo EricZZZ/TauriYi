@@ -23,7 +23,7 @@ async function setupTauriEventListeners() {
         const unlisten = await listen('clipboard-content', (event) => {
             console.log('收到剪贴板内容事件:', event);
             
-            if (window.sourceText && event.payload) {
+            if (window.sourceText && event.payload && window.sourceText.value.trim() !== event.payload) {
                 window.sourceText.value = event.payload;
                 window.handleTextInput();
                 window.sourceText.focus();
@@ -47,4 +47,4 @@ async function initializeTauri() {
     }
 }
 
-export { invoke, listen, initializeTauri };
+export { initializeTauri, invoke, listen };
