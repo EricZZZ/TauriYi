@@ -1,4 +1,10 @@
-### post请求
+###
+# API Test File
+# Base URL: http://localhost:8989
+# Define a variable for the auth token for reusability
+@your_token = 
+
+### OLLama post 请求
 POST http://localhost:11434/api/generate
 content-type: application/json
 
@@ -8,7 +14,7 @@ content-type: application/json
   "stream": false
 }
 
-### chat请求
+### OLLama chat 请求
 
 POST http://localhost:11434/api/chat
 content-type: application/json
@@ -22,4 +28,16 @@ content-type: application/json
     }
   ],
   "stream": false
+}
+
+### MTranServer 普通翻译接口 (Normal Translation Interface)
+# @name TranslateSingle
+POST http://localhost:8989/translate
+Content-Type: application/json
+Authorization: {{your_token}}
+
+{
+  "from": "ja",
+  "to": "zh",
+  "text": "ある窓の下を通りかかると、人間の声がしていました。何というやさしい、何という美しい、何と言うおっとりした声なんでしょう。"
 }

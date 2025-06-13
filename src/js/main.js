@@ -3,6 +3,7 @@ import { handleTextInput } from './translation.js';
 import { setupAutoResize, updateSourcePlaceholder, updateTargetPlaceholder } from './ui-utils.js';
 import { swapLanguages } from './language-swap.js';
 import { toggleSettingsPage, saveSettings, resetSettings, togglePasswordVisibility } from './settings.js';
+import { toggleHistoryPage, initializeHistoryEvents } from './history.js';
 
 // 全局元素引用
 window.sourceLang = document.getElementById('sourceLang');
@@ -49,6 +50,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         settingsIcon.addEventListener('click', toggleSettingsPage);
     }
     
+    // 绑定历史按钮事件
+    const historyIcon = document.querySelector('.history-icon');
+    if (historyIcon) {
+        historyIcon.addEventListener('click', toggleHistoryPage);
+    }
+    
     const saveBtn = document.getElementById('saveBtn');
     if (saveBtn) {
         saveBtn.addEventListener('click', saveSettings);
@@ -76,6 +83,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // 设置自动调整高度
     setupAutoResize();
+    
+    // 初始化历史页面事件
+    initializeHistoryEvents();
     
     // 初始化Tauri功能
     await initializeTauri();

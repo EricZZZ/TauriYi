@@ -2,6 +2,7 @@ mod ai;
 mod app_setup;
 mod commands;
 mod config;
+mod database;
 mod lang;
 mod resp;
 mod tray_menu;
@@ -21,8 +22,16 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
-            // 读取配置文件
+            // 初始化配置文件
             config::init_config(app);
+
+            // 初始化数据库
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = config::init_database(&app_handle).await {
+                    eprintln!("数据库初始化失败: {}", e);
+                }
+            });
 
             // 应用启动后的设置，可以在这里注册快捷键
             #[cfg(desktop)]
@@ -43,7 +52,11 @@ pub fn run() {
             commands::close_window,
             commands::load_config,
             commands::update_config,
-            commands::reset_config
+            commands::reset_config,
+            commands::get_translation_history,
+            commands::search_translations,
+            commands::delete_translation,
+            commands::clear_translation_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

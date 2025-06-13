@@ -23,6 +23,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["config.json"]
+    "resources": ["config.json", "translation_history.db"]
   }
 }

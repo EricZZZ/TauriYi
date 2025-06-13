@@ -1,9 +1,22 @@
+
+
 use tauri::path::BaseDirectory;
 use tauri::Manager;
 
-use crate::config::AppConfig;
-use crate::{ai, config, lang, resp::R};
+use crate::config::{get_database, AppConfig};
+use crate::{
+    ai, config,
+    database::{TranslationRecord},
+    lang,
+    resp::R,
+};
+use anyhow::Error as AnyhowError;
 use std::fs;
+
+
+
+
+
 
 /// 翻译
 #[tauri::command]
@@ -13,9 +26,10 @@ pub async fn translate(
     source_lang: lang::Lang,
 ) -> Result<R<String>, R<String>> {
     println!("开始调用tauri::command translate: {:?}", text);
+    
     match ai::translate(text.to_string(), target_lang, source_lang).await {
-        Ok(data) => Ok(R::success(data)),
-        Err(e) => Err(R::fail(1, &e.to_string())),
+        Ok(translated_text) => Ok(R::success(translated_text)),
+        Err(e) => Err(R::fail(1, &format!("{}", e))),
     }
 }
 
@@ -71,13 +85,119 @@ pub fn update_config(
     Ok(R::success(()))
 }
 
+/// 获取翻译历史记录
+#[tauri::command]
+pub async fn get_translation_history(
+    limit: Option<i32>,
+    offset: Option<i32>,
+) -> Result<R<Vec<TranslationRecord>>, String> {
+    let database = {
+        match get_database() {
+            Ok(db_arc) => match db_arc.lock() {
+                Ok(db_guard) => {
+                    if let Some(ref database) = *db_guard {
+                        database.clone()
+                    } else {
+                        return Err("数据库未初始化".to_string());
+                    }
+                }
+                Err(_) => return Err("数据库锁定失败".to_string()),
+            },
+            Err(e) => return Err(e),
+        }
+    };
+
+    match database.get_translation_history(limit, offset).await {
+        Ok(records) => Ok(R::success(records)),
+        Err(e) => Err(format!("获取翻译历史失败: {}", e)),
+    }
+}
+
+/// 搜索翻译记录
+#[tauri::command]
+pub async fn search_translations(
+    query: &str,
+    limit: Option<i32>,
+) -> Result<R<Vec<TranslationRecord>>, String> {
+    let database = {
+        match get_database() {
+            Ok(db_arc) => match db_arc.lock() {
+                Ok(db_guard) => {
+                    if let Some(ref database) = *db_guard {
+                        database.clone()
+                    } else {
+                        return Err("数据库未初始化".to_string());
+                    }
+                }
+                Err(_) => return Err("数据库锁定失败".to_string()),
+            },
+            Err(e) => return Err(e),
+        }
+    };
+
+    match database.search_translations(query, limit).await {
+        Ok(records) => Ok(R::success(records)),
+        Err(e) => Err(format!("搜索翻译记录失败: {}", e)),
+    }
+}
+
+/// 删除翻译记录
+#[tauri::command]
+pub async fn delete_translation(id: &str) -> Result<R<bool>, String> {
+    let database = {
+        match get_database() {
+            Ok(db_arc) => match db_arc.lock() {
+                Ok(db_guard) => {
+                    if let Some(ref database) = *db_guard {
+                        database.clone()
+                    } else {
+                        return Err("数据库未初始化".to_string());
+                    }
+                }
+                Err(_) => return Err("数据库锁定失败".to_string()),
+            },
+            Err(e) => return Err(e),
+        }
+    };
+
+    match database.delete_translation(id).await {
+        Ok(deleted) => Ok(R::success(deleted)),
+        Err(e) => Err(format!("删除翻译记录失败: {}", e)),
+    }
+}
+
+/// 清空翻译历史
+#[tauri::command]
+pub async fn clear_translation_history() -> Result<R<u64>, String> {
+    let database = {
+        match get_database() {
+            Ok(db_arc) => match db_arc.lock() {
+                Ok(db_guard) => {
+                    if let Some(ref database) = *db_guard {
+                        database.clone()
+                    } else {
+                        return Err("数据库未初始化".to_string());
+                    }
+                }
+                Err(_) => return Err("数据库锁定失败".to_string()),
+            },
+            Err(e) => return Err(e),
+        }
+    };
+
+    match database.clear_history().await {
+        Ok(count) => Ok(R::success(count)),
+        Err(e) => Err(format!("清空翻译历史失败: {}", e)),
+    }
+}
+
 #[tauri::command]
 pub fn reset_config(app_handle: tauri::AppHandle) -> Result<R<()>, R<String>> {
     let config_path = app_handle
         .path()
         .resolve(config::CONFIG_PATH, BaseDirectory::Resource)
         .expect("Failed to resolve resource path");
-    
+
     // 重置配置
     let config = AppConfig::default();
     let config_str = serde_json::to_string_pretty(&config).expect("Failed to serialize config");

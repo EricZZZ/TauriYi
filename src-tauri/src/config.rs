@@ -1,13 +1,19 @@
-use std::{fs, sync::Mutex};
+use std::{
+    fs,
+    sync::{Arc, Mutex},
+};
 
 use anyhow::Error;
 use once_cell::sync::{Lazy, OnceCell};
 use serde::{Deserialize, Serialize};
 use tauri::{path::BaseDirectory, App, Manager};
 
+use crate::database::Database;
+
 pub const INIT_WEIDTH: f64 = 300.0;
 pub const INIT_HEIGHT: f64 = 350.0;
 pub const CONFIG_PATH: &str = "config.json";
+pub const DB_FILE_PATH: &str = "translation_history.db";
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum ThemeType {
@@ -54,7 +60,41 @@ impl Default for AppConfig {
 
 pub static CONFIG: OnceCell<Mutex<AppConfig>> = OnceCell::new();
 pub static REQUEST_CLIENT: Lazy<reqwest::Client> = Lazy::new(reqwest::Client::new);
+// 全局数据库实例
+pub static DATABASE: OnceCell<Arc<Mutex<Option<Database>>>> = OnceCell::new();
 
+// 初始化数据库
+pub async fn init_database(
+    app_handle: &tauri::AppHandle,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let db_path = app_handle
+        .path()
+        .resolve(DB_FILE_PATH, BaseDirectory::Resource)
+        .expect("Failed to resolve resource path");
+
+    let database = Database::new(db_path).await?;
+
+    DATABASE
+        .set(Arc::new(Mutex::new(Some(database))))
+        .map_err(|_| {
+            Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to initialize database",
+            )) as Box<dyn std::error::Error>
+        })?;
+
+    Ok(())
+}
+
+// 获取数据库实例的辅助函数
+pub fn get_database() -> Result<Arc<Mutex<Option<Database>>>, String> {
+    DATABASE
+        .get()
+        .ok_or_else(|| "Database not initialized".to_string())
+        .map(|db| db.clone())
+}
+
+// 初始化配置
 pub fn init_config(app: &App) {
     let config_path = app
         .path()
@@ -86,6 +126,7 @@ pub fn init_config(app: &App) {
     }
 }
 
+// 获取配置
 pub fn get_config() -> Result<AppConfig, Error> {
     let config_guard = CONFIG
         .get()

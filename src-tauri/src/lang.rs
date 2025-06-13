@@ -20,6 +20,7 @@ impl Lang {
             Lang::Auto => "auto",
         }
     }
+
 }
 
 impl From<Lang> for String {
@@ -30,6 +31,18 @@ impl From<Lang> for String {
             Lang::Ja => "ja".to_string(),
             Lang::Ko => "ko".to_string(),
             Lang::Auto => "auto".to_string(),
+        }
+    }
+}
+
+impl From<Lang> for &str {
+    fn from(val: Lang) -> Self {
+        match val {
+            Lang::Zh => "zh",
+            Lang::En => "en",
+            Lang::Ja => "ja",
+            Lang::Ko => "ko",
+            Lang::Auto => "auto",
         }
     }
 }
