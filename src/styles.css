@@ -43,55 +43,42 @@ body {
     font-size: 14px;
     padding: 4px;
     border-radius: 50%;
-    background: #2a2a2a;
+    background: transparent;
     cursor: pointer;
     color: #e0e0e0;
     transition: background 0.2s, color 0.2s;
 }
 
 .settings-icon:hover, .close-icon:hover, .history-icon:hover {
-    background: #3a3a3a;
+    background: transparent;
     color: #ffffff;
 }
 
 /* 设置按钮激活状态 */
 .settings-icon.active {
-    background: #00a8ff;
-    color: #ffffff;
+    background: transparent;
+    color: #00a8ff;
 }
 
 .settings-icon.active:hover {
-    background: #0088cc;
+    background: transparent;
+    color: #0088cc;
 }
 
 /* 历史按钮激活状态 */
 .history-icon.active {
-    background: #00a8ff;
-    color: #ffffff;
+    background: transparent;
+    color: #00a8ff;
 }
 
 .history-icon.active:hover {
-    background: #0088cc;
+    background: transparent;
+    color: #0088cc;
 }
 
 .header h1 {
     font-size: 16px;
     font-weight: 600;
-    color: #ffffff;
-}
-
-.settings-icon {
-    font-size: 14px;
-    padding: 4px;
-    border-radius: 50%;
-    background: #2a2a2a;
-    cursor: pointer;
-    color: #e0e0e0;
-    transition: background 0.2s, color 0.2s;
-}
-
-.settings-icon:hover {
-    background: #3a3a3a;
     color: #ffffff;
 }
 
@@ -604,24 +591,38 @@ body.light-theme .header h1 {
 }
 
 body.light-theme .settings-icon,
-body.light-theme .close-icon {
-    background: #f0f0f0;
+body.light-theme .close-icon,
+body.light-theme .history-icon {
+    background: transparent;
     color: #666666;
 }
 
 body.light-theme .settings-icon:hover,
-body.light-theme .close-icon:hover {
-    background: #e0e0e0;
+body.light-theme .close-icon:hover,
+body.light-theme .history-icon:hover {
+    background: transparent;
     color: #333333;
 }
 
 body.light-theme .settings-icon.active {
-    background: #007acc;
-    color: #ffffff;
+    background: transparent;
+    color: #007acc;
 }
 
 body.light-theme .settings-icon.active:hover {
-    background: #005999;
+    background: transparent;
+    color: #005999;
+}
+
+/* 添加 history-icon 激活状态的明亮主题样式 */
+body.light-theme .history-icon.active {
+    background: transparent;
+    color: #007acc;
+}
+
+body.light-theme .history-icon.active:hover {
+    background: transparent;
+    color: #005999;
 }
 
 body.light-theme .input-section,

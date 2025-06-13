@@ -21,7 +21,7 @@ pub enum ThemeType {
     Light,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub enum PlatformType {
     OLLama,
     DeepSeek,
@@ -29,7 +29,7 @@ pub enum PlatformType {
     MTranServer,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
     #[serde(rename = "apiKey")]
     pub api_key: String,
@@ -128,18 +128,10 @@ pub fn init_config(app: &App) {
 
 // 获取配置
 pub fn get_config() -> Result<AppConfig, Error> {
-    let config_guard = CONFIG
+    Ok(CONFIG
         .get()
         .expect("Config not initialized")
         .lock()
-        .expect("Mutex poisoned");
-    Ok(AppConfig {
-        api_key: config_guard.api_key.clone(),
-        api_url: config_guard.api_url.clone(),
-        platform: config_guard.platform,
-        model_name: config_guard.model_name.clone(),
-        theme: config_guard.theme.clone(),
-        prompt: config_guard.prompt.clone(),
-        system_prompt: config_guard.system_prompt.clone(),
-    })
+        .expect("Config lock failed")
+        .clone())
 }

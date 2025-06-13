@@ -1,13 +1,8 @@
-use anyhow::Error;
 use anyhow::Result;
-use chrono;
-use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use std::sync::Mutex;
 
+use crate::config::AppConfig;
 use crate::config::{self, get_database, PlatformType};
-use crate::database::Database;
 use crate::lang::Lang;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -39,142 +34,137 @@ enum RequestPayload {
     MTran(MTranServerRequest),
 }
 
-pub async fn translate(
-    text: String,
-    target_lang: Lang,
-    source_lang: Lang,
-) -> Result<String, Error> {
-    let (api_url, api_key, model_name, platform, mut system_prompt, mut prompt) = {
-        let config = config::CONFIG.get().unwrap().lock().unwrap();
-        (
-            config.api_url.clone(),
-            config.api_key.clone(),
-            config.model_name.clone(),
-            config.platform,
-            config.system_prompt.clone(),
-            config.prompt.clone(),
-        )
-    };
-    system_prompt = system_prompt.replace("{{to}}", source_lang.to_full_name());
-    prompt = prompt
-        .replace("{{text}}", &text)
-        .replace("{{to}}", target_lang.to_full_name());
-    if model_name.contains("qwen3") {
-        prompt.push_str(" /no_think");
-    }
-    let request_payload: RequestPayload = match platform {
-        PlatformType::OLLama => RequestPayload::Chat(ChatRequest {
-            model: model_name.to_string(),
-            messages: vec![
-                ChatMessage {
-                    role: "system".to_string(),
-                    content: system_prompt.clone(),
-                },
-                ChatMessage {
-                    role: "user".to_string(),
-                    content: prompt.clone(),
-                },
-            ],
-            stream: Some(false),
-        }),
-        PlatformType::MTranServer => RequestPayload::MTran(MTranServerRequest {
-            from: source_lang.into(), // 假设 MTranServer 支持 "auto" 检测，或者您需要传入源语言参数
-            to: target_lang.into(),
-            text: text.clone(), // 使用原始输入文本
-        }),
-        _ => RequestPayload::Chat(ChatRequest {
-            model: model_name.to_string(),
-            messages: vec![
-                ChatMessage {
-                    role: "system".to_string(),
-                    content: system_prompt.clone(),
-                },
-                ChatMessage {
-                    role: "user".to_string(),
-                    content: prompt.clone(),
-                },
-            ],
-            stream: Some(false),
-        }),
-    };
-    println!("content: {:?}", prompt.clone());
+pub async fn translate(text: String, target_lang: Lang, source_lang: Lang) -> Result<String> {
+    let config = config::get_config()?;
+    let request_payload = build_request_payload(&text, target_lang, source_lang, &config)?;
 
-    let res = config::REQUEST_CLIENT
+    let response =
+        send_translation_request(&config.api_url, &config.api_key, request_payload).await?;
+    let translated_text =
+        parse_translation_response(response, &config.platform, &config.model_name).await?;
+
+    let database = {
+        match get_database() {
+            Ok(db_arc) => match db_arc.lock() {
+                Ok(db_guard) => {
+                    if let Some(ref database) = *db_guard {
+                        database.clone()
+                    } else {
+                        return Err(anyhow::anyhow!("数据库未初始化"));
+                    }
+                }
+                Err(_) => return Err(anyhow::anyhow!("数据库锁定失败")),
+            },
+            Err(e) => return Err(anyhow::anyhow!("获取数据库连接失败: {:?}", e)),
+        }
+    };
+
+    database
+        .save_translation(
+            &text,
+            &translated_text,
+            source_lang.into(),
+            target_lang.into(),
+        )
+        .await?;
+
+    Ok(translated_text)
+}
+
+async fn send_translation_request(
+    api_url: &str,
+    api_key: &str,
+    request_payload: RequestPayload,
+) -> Result<reqwest::Response> {
+    let response = config::REQUEST_CLIENT
         .post(api_url)
         .header("Authorization", format!("Bearer {}", api_key))
         .json(&request_payload)
         .send()
         .await?;
+    Ok(response)
+}
 
-    if res.status().is_success() {
-        let response: serde_json::Value = res.json().await?;
-        let mut translated_text = "";
-        let translation_result = match platform {
-            PlatformType::OLLama => {
-                if let Some(message) = response["message"]["content"].as_str() {
-                    translated_text = message;
-                    if model_name.contains("qwen3") {
-                        // 移除 <think></think> 标记
-                        println!("content: {:?}", message);
+fn build_request_payload(
+    text: &str,
+    target_lang: Lang,
+    source_lang: Lang,
+    config: &AppConfig,
+) -> Result<RequestPayload> {
+    let system_prompt = config
+        .system_prompt
+        .replace("{{to}}", source_lang.to_full_name());
+    let mut prompt = config
+        .prompt
+        .replace("{{text}}", text)
+        .replace("{{to}}", target_lang.to_full_name());
 
-                        let message = message.replace("<think>\n\n</think>\n\n", "");
-                        Ok(message.to_string())
-                    } else {
-                        Ok(message.to_string())
-                    }
-                } else {
-                    Err(anyhow::anyhow!("Failed to parse response"))
-                }
+    match config.platform {
+        PlatformType::OLLama => {
+            if config.model_name.contains("qwen3") {
+                prompt.push_str(" /no_think");
             }
-            PlatformType::MTranServer => {
-                if let Some(message) = response["result"].as_str() {
-                    translated_text = message;
-                    Ok(message.to_string())
-                } else {
-                    Err(anyhow::anyhow!("Failed to parse response"))
-                }
-            }
-            _ => {
-                if let Some(message) = response["choices"][0]["message"]["content"].as_str() {
-                    translated_text = message;
-                    Ok(message.to_string())
-                } else {
-                    Err(anyhow::anyhow!("Failed to parse response"))
-                }
-            }
-        };
-
-        let database = {
-            match get_database() {
-                Ok(db_arc) => match db_arc.lock() {
-                    Ok(db_guard) => {
-                        if let Some(ref database) = *db_guard {
-                            database.clone()
-                        } else {
-                            return Err(anyhow::anyhow!("数据库未初始化").into());
-                        }
-                    }
-                    Err(_) => return Err(anyhow::anyhow!("数据库锁定失败").into()),
+            Ok(RequestPayload::Chat(ChatRequest {
+                model: config.model_name.clone(),
+                messages: vec![
+                    ChatMessage {
+                        role: "system".to_string(),
+                        content: system_prompt,
+                    },
+                    ChatMessage {
+                        role: "user".to_string(),
+                        content: prompt,
+                    },
+                ],
+                stream: Some(false),
+            }))
+        }
+        PlatformType::MTranServer => Ok(RequestPayload::MTran(MTranServerRequest {
+            from: source_lang.into(),
+            to: target_lang.into(),
+            text: text.to_string(),
+        })),
+        _ => Ok(RequestPayload::Chat(ChatRequest {
+            model: config.model_name.clone(),
+            messages: vec![
+                ChatMessage {
+                    role: "system".to_string(),
+                    content: system_prompt,
                 },
-                Err(e) => return Err(anyhow::anyhow!("获取数据库失败: {:?}", e).into()),
-            }
-        };
+                ChatMessage {
+                    role: "user".to_string(),
+                    content: prompt,
+                },
+            ],
+            stream: Some(false),
+        })),
+    }
+}
 
-        database
-            .save_translation(
-                &text,
-                &translated_text,
-                source_lang.into(),
-                target_lang.into(),
-            )
-            .await?;
+async fn parse_translation_response(
+    response: reqwest::Response,
+    platform: &PlatformType,
+    model_name: &str,
+) -> Result<String> {
+    let json: serde_json::Value = response.json().await?;
 
-        translation_result
+    let content = match platform {
+        PlatformType::OLLama => json["message"]["content"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse OLLama response"))?,
+        PlatformType::MTranServer => json["result"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse MTranServer response"))?,
+        _ => json["choices"][0]["message"]["content"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse ChatGPT/DeepSeek response"))?,
+    };
+
+    // 处理特殊模型的响应清理
+    if platform == &PlatformType::OLLama && model_name.contains("qwen3") {
+        Ok(content.replace("<think>\n\n</think>\n\n", ""))
     } else {
-        Err(anyhow::anyhow!(
-            "Request failed with status: {}",
-            res.status()
-        ))
+        Ok(content.to_string())
     }
 }
 
